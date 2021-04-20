@@ -30,13 +30,6 @@ Powerline is a way to customize the terminal in Linux so that it looks nicer and
 If you meet an error that does not show you the branch position you are on, please see the discussion here:
 > [Fix branch status not showing](https://github.com/powerline/powerline/issues/186#issuecomment-247810572)
 
-
-### Fusion 360
-TBC
-
-### GrabCAD
-TBC
-
 ### Huy's personal recommendation (for an easier and stress free life)
 You might want to download the following extensions on your VSCode (from the extension tab) which can do a lot of cool stuffs (eg. auto complete, header finding, intellisense, ...) that help manage your workflow and monitor other workflow, just type the key words as you see bellow:
 * Git History
@@ -53,9 +46,10 @@ If you decide to pick up this cool documentation language and want to help with 
 * Markdown preview
 * Mardown All in One
 
-## 3. Timeline & Progress
+## 3. Progress
 ### A.N.A.S  v1.0
-ANAS v1.0 list of features:
+
+
 
 
 

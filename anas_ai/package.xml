@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>auto_nav</name>
+  <name>anas_ai</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="nus@todo.todo">nus</maintainer>
+  <maintainer email="huy2840@gmail.com">yuuki</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>
@@ -15,7 +15,13 @@
   <export>
     <build_type>ament_python</build_type>
     <exec_depend>rclpy</exec_depend>
-    <exec_depend>geometry_msgs</exec_depend>
+    <exec_depend>nav_msgs</exec_depend>
     <exec_depend>sensor_msgs</exec_depend>
+    <exec_depend>geometry_msgs</exec_depend>
+    <exec_depend>math</exec_depend>
+    <exec_depend>cmath</exec_depend>
+    <exec_depend>numpy</exec_depend>
+    <exec_depend>time</exec_depend>
+    <exec_depend>cv2</exec_depend>
   </export>
 </package>

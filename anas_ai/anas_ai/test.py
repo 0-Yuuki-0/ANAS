@@ -24,15 +24,19 @@ import math
 import cmath
 import time
 
+from std_msgs.msg import UInt64MultiArray
+
+
 # constants
 rotatechange = 0.1
 speedchange = 0.05
-occ_bins = [-1, 0, 100, 101]
-stop_distance = 0.20
-front_angle = 20
+occ_bins = [-1, 0, 80, 100]
+stop_distance = 0.25
+front_angle = 30
 front_angles = range(-front_angle, front_angle+1, 1)
 scanfile = 'lidar.txt'
 mapfile = 'map.txt'
+mapdata = np.array(0)
 
 # code from https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
 
@@ -100,6 +104,17 @@ class AutoNav(Node):
         self.scan_subscription  # prevent unused variable warning
         self.laser_range = np.array([])
 
+        # receiving moving path from occupy
+        self.path_subscription = self.create_subscription(
+            UInt64MultiArray,
+            'move_path',
+            self.path_callback,
+            10)
+    
+    def path_callback(self,msg):
+        arr = np.reshape(msg.data,(len(msg.data)//2,2))
+        self.get_logger().info(str(arr))
+
     def odom_callback(self, msg):
         # self.get_logger().info('In odom_callback')
         orientation_quat = msg.pose.pose.orientation
@@ -107,15 +122,16 @@ class AutoNav(Node):
             orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w)
 
     def occ_callback(self, msg):
-        # self.get_logger().info('In occ_callback')
+        self.get_logger().info('In occ_callback')
         # create numpy array
         msgdata = np.array(msg.data)
         # compute histogram to identify percent of bins with -1
-        # occ_counts = np.histogram(msgdata,occ_bins)
+        occ_counts = np.histogram(msgdata, occ_bins)
         # calculate total number of bins
-        # total_bins = msg.info.width * msg.info.height
+        total_bins = msg.info.width * msg.info.height
         # log the info
-        # self.get_logger().info('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i' % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins))
+        self.get_logger().info('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i' %
+                               (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins))
 
         # make msgdata go from 0 instead of -1, reshape into 2D
         oc2 = msgdata + 1
@@ -123,7 +139,8 @@ class AutoNav(Node):
         # self.occdata = np.uint8(oc2.reshape(msg.info.height,msg.info.width,order='F'))
         self.occdata = np.uint8(oc2.reshape(msg.info.height, msg.info.width))
         # print to file
-        np.savetxt(mapfile, self.occdata)
+        # np.savetxt(mapfile, self.occdata)
+        mapdata = self.occdata
 
     def scan_callback(self, msg):
         # self.get_logger().info('In scan_callback')
@@ -258,6 +275,7 @@ class AutoNav(Node):
             # stop moving
             self.stopbot()
 
+    
 
 def main(args=None):
     rclpy.init(args=args)
