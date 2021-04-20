@@ -47,9 +47,43 @@ If you decide to pick up this cool documentation language and want to help with 
 * Mardown All in One
 
 ## 3. Progress
-### A.N.A.S  v1.0
+### A.N.A.S  v1.0 (Wall Follower)
+> This is legacy code which is not saved
+#### Logic
+* Hugs right 
+* Using rotatebot() and lidar data
+* Minimum distance from the wall is 20cm
+* Maximum distance from the wall is 30cm
+* Everytime it is closer than 20cm it turns left 10<sup>o</sup>, if it is more than 30cm it turns right 10<sup>o</sup>
+* After turning, move forward for 2 seconds
+#### Problems:
+* A lot fo jitter
+* Movement speed and turning is prety slow and inaccurate
+* The forward movment is hardcode and not adaptive
+* Cannot turn corner well and
+### A.N.A.S  v2.0 (A*STAR Path Finding)
+> To run this logic   
+> `ros2 run anas_ai pos`  
+> `ros2 run anas_ai nav`
+#### Logic
+* Based on Andreas Bresser [Pathfinding library](https://pypi.org/project/pathfinding/), we can generate a path (list of coordinates) to a certain coordinate given the map, the starting position and the ending position of the bot.  
+* Using OpenCV Python Library CV2 and examine the map generated from occupancy msg. Highligh all the intersection between unexplored region and explroed region which have a clear path. (Run `ros2 run anas_ai occ` to see what the highligh would looks like).
+* Find the furthest highlight point from the bot and move take that as the target.
+* Input the target into the pathfinding library, get the list of path coordinate, and feed it into the bot.
+#### Problems
+* The turning and moving between coordinate takes very long time
+* To complete one set of path takes more than 2 mintues
+* The orientation of the map generated and the map is in wrong orientation regularly, making the rotatebot code very confusing for the bot, because it doesnt know where to go.
 
-
+### A.N.A.S  v3.0 (Wall Follower v2)
+> To run this logic   
+> `ros2 run anas_ai state`  
+> `ros2 run anas_ai follow`
+#### Logic
+* Same logic but upgrade and use some more advanced code with reference to Bug2 Algorithm on [this webpage](https://automaticaddison.com/the-bug2-algorithm-for-robot-motion-planning/)
+#### Problems
+* Does not work really well when all the walls are disconnected
+* The speed is still relatively slow, but acceptable
 
 
 

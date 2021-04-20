@@ -24,7 +24,8 @@ setup(
             'occ = anas_ai.occupancy:main',
             'pos = anas_ai.position:main',
             'follow = anas_ai.wallfollower:main',
-            'state = anas_ai.state:main',       
+            'state = anas_ai.state:main',
+            'shoot = anas_ai.shooting:main',     
         ],
     },
 )

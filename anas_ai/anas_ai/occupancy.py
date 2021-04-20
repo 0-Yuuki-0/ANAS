@@ -231,8 +231,8 @@ class Occupy(Node):
         # lines = cv2.Canny(lines,1,1)
 
         # show the image using grayscale map
-        # plt.imshow(lines, cmap='gray', origin='lower')
-        plt.imshow(img, cmap='gray', origin='lower')
+        plt.imshow(lines, cmap='gray', origin='lower')
+        # plt.imshow(img, cmap='gray', origin='lower')
         # plt.imshow(rotated, cmap='gray', origin='lower')
         plt.draw_all()
         # pause to make sure the plot gets created
