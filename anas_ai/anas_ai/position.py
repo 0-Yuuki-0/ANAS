@@ -18,19 +18,6 @@ from PIL import Image
 
 from std_msgs.msg import UInt64MultiArray, Float64MultiArray
 
-# constants
-rotatechange = 0.2
-speedchange = 0.07
-occ_bins = [-1, 0, 51, 101]
-map_bg_color = 1
-stop_distance = 0.25
-front_angle = 30
-front_angles = range(-front_angle, front_angle+1, 1)
-scanfile = 'lidar.txt'
-mapfile = 'map.txt'
-mapdata = np.array(0)
-length = 5
-
 def euler_from_quaternion(x, y, z, w):
     """
     Convert a quaternion into euler angles (roll, pitch, yaw)
