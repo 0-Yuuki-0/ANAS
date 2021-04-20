@@ -60,6 +60,7 @@ length = 5
 st = generate_binary_structure(2,1)
 dilate = 2
 
+# funtion to generate a set of coordinate (path) to the inout target
 def path_find(self,odata,grid_x,grid_y, height, width, explore_coordinate):    
     try: 
         mod_odata = np.where(np.copy(odata)-2 == 8, 0, np.copy(odata)-2)
@@ -134,25 +135,6 @@ class AutoNav(Node):
         self.rightfront_dist = 0
         self.right_dist = 0
 
-        self.forward_speed = 0.10
-                # Finite states for the wall following mode
-        #   "turn left": Robot turns towards the left
-        #   "search for wall": Robot tries to locate the wall       
-        #   "follow wall": Robot moves parallel to the wall
-        self.wall_following_state = "follow wall"
-         
-        # Set turning speeds (to the left) in rad/s 
-        # These values were determined by trial and error.
-        self.turning_speed_wf_fast = 0.4  # Fast turn
-        self.turning_speed_wf_slow = 0.1 # Slow turn
-         
-        # Wall following distance threshold.
-        # We want to try to keep within this distance from the wall.
-        self.dist_thresh_wf = 0.40 # in meters  
-         
-        # We don't want to get too close to the wall though.
-        self.dist_too_close_to_wall = 0.20 # in meters
-
         # create subscriber to get position
         self.position_subscription = self.create_subscription(
             Float64MultiArray,
@@ -169,44 +151,6 @@ class AutoNav(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-        self.scan_subscriber = self.create_subscription(
-            LaserScan,
-            'scan',
-            self.scan_callback,
-            qos_profile=qos_profile_sensor_data)
-    
-    def scan_callback(self, msg):
-        """
-        This method gets called every time a LaserScan message is 
-        received on the /en613/scan ROS topic   
-        """
-        # Read the laser scan data that indicates distances
-        # to obstacles (e.g. wall) in meters and extract
-        # 5 distinct laser readings to work with.
-        # Each reading is separated by 45 degrees.
-        # Assumes 181 laser readings, separated by 1 degree. 
-        # (e.g. -90 degrees to 90 degrees....0 to 180 degrees)
-        self.left_dist = msg.ranges[180]
-        self.leftfront_dist = msg.ranges[135]
-        self.front_dist = msg.ranges[90]
-        self.rightfront_dist = msg.ranges[45]
-        self.right_dist = msg.ranges[0]
-         
-        # The total number of laser rays. Used for testing.
-        #number_of_laser_rays = str(len(msg.ranges))        
-             
-        # Print the distance values (in meters) for testing
-        #self.get_logger().info('L:%f LF:%f F:%f RF:%f R:%f' % (
-        #   self.left_dist,
-        #   self.leftfront_dist,
-        #   self.front_dist,
-        #   self.rightfront_dist,
-        #   self.right_dist))
-         
-        # if self.robot_mode == "obstacle avoidance mode":
-        #     self.avoid_obstacles()
-
-
     def position_callback(self,msg):
         self.cur_position = [int(msg.data[0]),int(msg.data[1])]
         self.roll_trans, self.pitch_trans, self.yaw_trans = msg.data[2], msg.data[3], msg.data[4]
@@ -218,7 +162,6 @@ class AutoNav(Node):
         # self.get_logger().info('Update position: X = %i , Y = %i' % (msg.data[0],msg.data[1]))
         # self.get_logger().info('Update roll, pitch, yaw: %f , %f, %f' % (msg.data[2],msg.data[3],msg.data[4]))
         # self.get_logger().info('Pose position: X = %i , Y = %i' % (msg.data[7],msg.data[8]))
-
         # self.get_logger().info(str(msg.data))
 
     def occ_callback(self, msg):
@@ -325,83 +268,63 @@ class AutoNav(Node):
         self.info = path_find(self,odata_pass,grid_x,grid_y, height, width, explore_coordinate)
 
     # function to rotate the TurtleBot
-    # def rotatebot(self, rot_angle):
-    #     # self.get_logger().info('In rotatebot')
-    #     # create Twist object
-    #     twist = Twist()
+    def rotatebot(self, rot_angle):
+        # self.get_logger().info('In rotatebot')
+        # create Twist object
+        twist = Twist()
 
-    #     # get current yaw angle
-    #     current_yaw = self.yaw_trans
-    #     # log the info
-    #     self.get_logger().info('Current: %f' % math.degrees(current_yaw))
-    #     # we are going to use complex numbers to avoid problems when the angles go from
-    #     # 360 to 0, or from -180 to 180
-    #     c_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
-    #     # calculate desired yaw
-    #     target_yaw = rot_angle
-    #     # convert to complex notation
-    #     c_target_yaw = complex(math.cos(target_yaw), math.sin(target_yaw))
-    #     self.get_logger().info('Desired: %f' % math.degrees(cmath.phase(c_target_yaw)))
-    #     # divide the two complex numbers to get the change in direction
-    #     c_change = c_target_yaw / c_yaw
-    #     # self.get_logger().info('Calculate c_change')
-    #     # get the sign of the imaginary component to figure out which way we have to turn
-    #     c_change_dir = np.sign(c_change.imag)
-    #     # set linear speed to zero so the TurtleBot rotates on the spot
-    #     # self.get_logger().info('Calculate c_change_dir')
-    #     twist.linear.x = 0.0
-    #     # set the direction to rotate
-    #     # self.get_logger().info('set twist linear x')
-    #     twist.angular.z = c_change_dir * rotatechange
-    #     # self.get_logger().info('set twist linear z: ' + str(twist.angular.z))
-    #     # start rotation
-    #     self.publisher_.publish(twist)
-    #     # self.get_logger().info('Published twist')
+        # get current yaw angle
+        current_yaw = self.yaw_trans
+        # log the info
+        self.get_logger().info('Current: %f' % math.degrees(current_yaw))
+        # we are going to use complex numbers to avoid problems when the angles go from
+        # 360 to 0, or from -180 to 180
+        c_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
+        # calculate desired yaw
+        target_yaw = rot_angle
+        # convert to complex notation
+        c_target_yaw = complex(math.cos(target_yaw), math.sin(target_yaw))
+        self.get_logger().info('Desired: %f' % math.degrees(cmath.phase(c_target_yaw)))
+        # divide the two complex numbers to get the change in direction
+        c_change = c_target_yaw / c_yaw
+        # self.get_logger().info('Calculate c_change')
+        # get the sign of the imaginary component to figure out which way we have to turn
+        c_change_dir = np.sign(c_change.imag)
+        # set linear speed to zero so the TurtleBot rotates on the spot
+        # self.get_logger().info('Calculate c_change_dir')
+        twist.linear.x = 0.0
+        # set the direction to rotate
+        # self.get_logger().info('set twist linear x')
+        twist.angular.z = c_change_dir * rotatechange
+        # self.get_logger().info('set twist linear z: ' + str(twist.angular.z))
+        # start rotation
+        self.publisher_.publish(twist)
+        # self.get_logger().info('Published twist')
         
 
-    #     # we will use the c_dir_diff variable to see if we can stop rotating
-    #     c_dir_diff = c_change_dir
-    #     self.get_logger().info('c_change_dir: %f c_dir_diff: %f' % (c_change_dir, c_dir_diff))
-    #     # if the rotation direction was 1.0, then we will want to stop when the c_dir_diff
-    #     # becomes -1.0, and vice versa
-    #     while(c_change_dir * c_dir_diff > 0):       
-    #         # allow the callback functions to run
-    #         rclpy.spin_once(self)
-    #         current_yaw = self.yaw_trans
-    #         # convert the current yaw to complex form
-    #         c_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
-    #         # self.get_logger().info('Current Yaw: %f' % math.degrees(current_yaw))
-    #         # get difference in angle between current and target
-    #         c_change = c_target_yaw / c_yaw
-    #         # get the sign to see if we can stop
-    #         c_dir_diff = np.sign(c_change.imag)
-    #         # self.get_logger().info('c_change_dir: %f c_dir_diff: %f' % (c_change_dir, c_dir_diff))
-
-    #     self.get_logger().info('End Yaw: %f' % math.degrees(current_yaw))
-    #     # set the rotation speed to 0
-    #     twist.angular.z = 0.0
-    #     # stop the rotation
-    #     self.publisher_.publish(twist)
-
-    def rotate(self,point):
-        goal = Point ()
-        goal.x = float(point[0])
-        goal.y = float(point[1])
-
-        speed = Twist ()
-
-        inc_x = goal.x - float(self.cur_position[0])
-        inc_y = goal.y - float(self.cur_position[1])
-
-        goal_angle = math.atan2(inc_y, inc_x)
-
-        while abs(goal_angle - self.yaw) > 0.05:
-            self.get_logger().info("Goal angle - self.yaw = " + str(goal_angle - self.yaw))
-            speed.linear.x = 0.0
-            speed.angular.z = rotatechange
-            self.publisher_.publish(speed)
+        # we will use the c_dir_diff variable to see if we can stop rotating
+        c_dir_diff = c_change_dir
+        self.get_logger().info('c_change_dir: %f c_dir_diff: %f' % (c_change_dir, c_dir_diff))
+        # if the rotation direction was 1.0, then we will want to stop when the c_dir_diff
+        # becomes -1.0, and vice versa
+        while(c_change_dir * c_dir_diff > 0):       
+            # allow the callback functions to run
             rclpy.spin_once(self)
-        self.stopbot()
+            current_yaw = self.yaw_trans
+            # convert the current yaw to complex form
+            c_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
+            # self.get_logger().info('Current Yaw: %f' % math.degrees(current_yaw))
+            # get difference in angle between current and target
+            c_change = c_target_yaw / c_yaw
+            # get the sign to see if we can stop
+            c_dir_diff = np.sign(c_change.imag)
+            # self.get_logger().info('c_change_dir: %f c_dir_diff: %f' % (c_change_dir, c_dir_diff))
+
+        self.get_logger().info('End Yaw: %f' % math.degrees(current_yaw))
+        # set the rotation speed to 0
+        twist.angular.z = 0.0
+        # stop the rotation
+        self.publisher_.publish(twist)
 
     def forward(self):
         twist = Twist()
@@ -446,159 +369,43 @@ class AutoNav(Node):
             # else:
             #     self.get_logger().info("No path found! Map complete")
 
-    # def test_move(self):
-    #     if self.info[0] != 0 and len(self.info[1]) > 1:
-    #         path = self.info[1].copy()
-    #         # path = [[48,32],[48,36],[43,36]]
-    #         self.get_logger().info("Adding path" + str(path))
-    #         while (len(path)>0):
-    #             rclpy.spin_once(self)
-    #             point = path.pop(0)
-    #             self.get_logger().info("Target is at: " + str(point))
-    #             goal = Point ()
-    #             goal.x = float(point[0])
-    #             goal.y = float(point[1])
+    def test_move(self):
+        if self.info[0] != 0 and len(self.info[1]) > 1:
+            path = self.info[1].copy()
+            self.get_logger().info("Adding path" + str(path))
+            while (len(path)>0):
+                rclpy.spin_once(self)
+                point = path.pop(0)
+                self.get_logger().info("Target is at: " + str(point))
+                goal = Point ()
+                goal.x = float(point[0])
+                goal.y = float(point[1])
 
-    #             inc_x = goal.x - float(self.cur_position[0])
-    #             inc_y = goal.y - float(self.cur_position[1])
+                inc_x = goal.x - float(self.cur_position[0])
+                inc_y = goal.y - float(self.cur_position[1])
 
-    #             goal_angle = (math.atan2(inc_y, inc_x) - self.yaw
+                goal_angle = (math.atan2(inc_y, inc_x) - self.yaw)
 
-    #             self.rotatebot(goal_angle)
-    #             self.get_logger().info("Finish turning")  
-    #             time.sleep(1)
+                self.rotatebot(goal_angle)
+                self.get_logger().info("Finish turning")  
+                time.sleep(1)
                 
-    #             # while (self.dist_check(point)):
-    #             #     self.forward()
-    #             #     self.get_logger().info("Moving toward destination")
-    #             #     rclpy.spin_once(self)
+                while (self.dist_check(point)):
+                    self.forward()
+                    self.get_logger().info("Moving toward destination")
+                    rclpy.spin_once(self)
                 
-    #             self.forward()
-    #             self.get_logger().info("Moving toward destination")
-    #             time.sleep(1)
-    #             self.stopbot()
-    #             self.get_logger().info("Moving finish")
+                self.forward()
+                self.get_logger().info("Moving toward destination")
+                time.sleep(1)
+                self.stopbot()
+                self.get_logger().info("Moving finish")
 
-    def follow_wall(self):
-        """
-        This method causes the robot to follow the boundary of a wall.
-        """
-        # Create a geometry_msgs/Twist message
-        msg = Twist()
-        msg.linear.x = 0.0
-        msg.linear.y = 0.0
-        msg.linear.z = 0.0
-        msg.angular.x = 0.0
-        msg.angular.y = 0.0
-        msg.angular.z = 0.0        
- 
-        # # Special code if Bug2 algorithm is activated
-        # if self.bug2_switch == "ON":
-         
-        #     # Calculate the point on the start-goal 
-        #     # line that is closest to the current position
-        #     x_start_goal_line = self.current_x
-        #     y_start_goal_line = (
-        #         self.start_goal_line_slope_m * (
-        #         x_start_goal_line)) + (
-        #         self.start_goal_line_y_intercept)
-                         
-        #     # Calculate the distance between current position 
-        #     # and the start-goal line
-        #     distance_to_start_goal_line = math.sqrt(pow(
-        #                 x_start_goal_line - self.current_x, 2) + pow(
-        #                 y_start_goal_line - self.current_y, 2)) 
-                             
-        #     # If we hit the start-goal line again               
-        #     if distance_to_start_goal_line < self.distance_to_start_goal_line_precision:
-             
-        #         # Determine if we need to leave the wall and change the mode
-        #         # to 'go to goal'
-        #         # Let this point be the leave point
-        #         self.leave_point_x = self.current_x
-        #         self.leave_point_y = self.current_y
- 
-        #         # Record the distance to the goal from the leave point
-        #         self.distance_to_goal_from_leave_point = math.sqrt(
-        #             pow(self.goal_x_coordinates[self.goal_idx] 
-        #             - self.leave_point_x, 2)
-        #             + pow(self.goal_y_coordinates[self.goal_idx]  
-        #             - self.leave_point_y, 2)) 
-             
-        #         # Is the leave point closer to the goal than the hit point?
-        #         # If yes, go to goal. 
-        #         diff = self.distance_to_goal_from_hit_point - self.distance_to_goal_from_leave_point
-        #         if diff > self.leave_point_to_hit_point_diff:
-                         
-        #             # Change the mode. Go to goal.
-        #             self.robot_mode = "go to goal mode"
- 
- 
-        #         # Exit this function
-        #         return             
-         
-        # Logic for following the wall
-        # >d means no wall detected by that laser beam
-        # <d means an wall was detected by that laser beam
-        d = self.dist_thresh_wf
-         
-        if self.leftfront_dist > d and self.front_dist > d and self.rightfront_dist > d:
-            self.wall_following_state = "search for wall"
-            msg.linear.x = self.forward_speed
-            msg.angular.z = -self.turning_speed_wf_slow # turn right to find wall
-             
-        elif self.leftfront_dist > d and self.front_dist < d and self.rightfront_dist > d:
-            self.wall_following_state = "turn left"
-            msg.angular.z = self.turning_speed_wf_fast
-             
-             
-        elif (self.leftfront_dist > d and self.front_dist > d and self.rightfront_dist < d):
-            if (self.rightfront_dist < self.dist_too_close_to_wall):
-                # Getting too close to the wall
-                self.wall_following_state = "turn left"
-                msg.linear.x = self.forward_speed
-                msg.angular.z = self.turning_speed_wf_fast      
-            else:           
-                # Go straight ahead
-                self.wall_following_state = "follow wall" 
-                msg.linear.x = self.forward_speed   
-                                     
-        elif self.leftfront_dist < d and self.front_dist > d and self.rightfront_dist > d:
-            self.wall_following_state = "search for wall"
-            msg.linear.x = self.forward_speed
-            msg.angular.z = -self.turning_speed_wf_slow # turn right to find wall
-             
-        elif self.leftfront_dist > d and self.front_dist < d and self.rightfront_dist < d:
-            self.wall_following_state = "turn left"
-            msg.angular.z = self.turning_speed_wf_fast
-             
-        elif self.leftfront_dist < d and self.front_dist < d and self.rightfront_dist > d:
-            self.wall_following_state = "turn left"
-            msg.angular.z = self.turning_speed_wf_fast
-             
-        elif self.leftfront_dist < d and self.front_dist < d and self.rightfront_dist < d:
-            self.wall_following_state = "turn left"
-            msg.angular.z = self.turning_speed_wf_fast
-             
-        elif self.leftfront_dist < d and self.front_dist > d and self.rightfront_dist < d:
-            self.wall_following_state = "search for wall"
-            msg.linear.x = self.forward_speed
-            msg.angular.z = -self.turning_speed_wf_slow # turn right to find wall
-             
-        else:
-            pass
-
-        self.get_logger().info("Published speed")
-        self.get_logger().info(self.wall_following_state)
-            
-        # Send velocity command to the robot
-        self.publisher_.publish(msg)
-        
     def navigation(self):
         try:
             while rclpy.ok():
                 rclpy.spin_once(self)
-                self.follow_wall()
+                self.test_move()
 
                 # allow the callback functions to run
 

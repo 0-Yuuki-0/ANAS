@@ -21,7 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'nav = anas_ai.anasai:main',
-            'occ = anas_ai.r2occupancy2:main',
+            'occ = anas_ai.occupancy:main',
             'pos = anas_ai.position:main',
             'follow = anas_ai.wallfollower:main',
             'state = anas_ai.state:main',       
