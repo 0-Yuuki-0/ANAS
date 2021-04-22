@@ -39,7 +39,7 @@ You might want to download the following extensions on your VSCode (from the ext
 * TabNine (this is some cool sorcery stuff)
   
 ### Markdown
-Want to know how I make this cool document? I written it in a markup language called Mardown (yeah I know ironically). You can find more information about it here:
+Want to know how I make this cool document? I written it in a markup language called Markdown (yeah I know ironically). You can find more information about it here:
 > [Markdown](https://www.markdownguide.org/)
 
 If you decide to pick up this cool documentation language and want to help with documenting, you can also download this following extensions in VSCode:
