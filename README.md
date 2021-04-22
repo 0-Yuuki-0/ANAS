@@ -57,7 +57,7 @@ If you decide to pick up this cool documentation language and want to help with 
 * Everytime it is closer than 20cm it turns left 10<sup>o</sup>, if it is more than 30cm it turns right 10<sup>o</sup>
 * After turning, move forward for 2 seconds
 #### Problems:
-* A lot fo jitter
+* A lot of jitter
 * Movement speed and turning is prety slow and inaccurate
 * The forward movment is hardcode and not adaptive
 * Cannot turn corner well and
