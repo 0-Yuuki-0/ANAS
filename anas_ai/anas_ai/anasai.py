@@ -57,52 +57,78 @@ mapfile = 'map.txt'
 mapdata = np.array(0)
 length = 5
 
-st = generate_binary_structure(2,1)
+st = generate_binary_structure(2, 1)
 dilate = 2
 
 # funtion to generate a set of coordinate (path) to the inout target
-def path_find(self,odata,grid_x,grid_y, height, width, explore_coordinate):    
-    try: 
-        mod_odata = np.where(np.copy(odata)-2 == 8, 0, np.copy(odata)-2)
-        
-        dilated = grey_dilation(mod_odata, footprint = iterate_structure(st,dilate), mode='nearest')
 
-        matrix = np.where((dilated > 0),0,1)   
-                
+
+def path_find(self, odata, grid_x, grid_y, height, width, explore_coordinate):
+    """Generates a list of coordinates to the further target from a list of targets using occupancy reshaped data
+
+    Args:
+        odata (list): Reshaped occupancy data (2D)
+        grid_x (int): X location of the bot
+        grid_y (int): Y location of the bot
+        height (int): Height of the map
+        width (int): Width of the map
+        explore_coordinate (list): list of [x,y] coordinates of possible target
+
+    Returns:
+        list: [[target],[list of coordinates]]
+    """
+    try:
+        # modify odata for easier manipulation
+        mod_odata = np.where(np.copy(odata)-2 == 8, 0, np.copy(odata)-2)
+
+        # Dilated the map so the bot will not hit a wall
+        dilated = grey_dilation(
+            mod_odata, footprint=iterate_structure(st, dilate), mode='nearest')
+
+        # Create a 0 and 1 matrix where 0 = no object, 1 = has object
+        matrix = np.where((dilated > 0), 0, 1)
+
+        # Takes in the list of all targets and find the one with the
+        # furthest dist from the bot and set the final target to that coordinates
         maximum = 0
 
         for coordinate in explore_coordinate:
-            if (coordinate[0] < width and coordinate[1] <height):
-                point1 = np.array((coordinate[0],coordinate[1]))
-                point2 = np.array((grid_x,grid_y))
+            if (coordinate[0] < width and coordinate[1] < height):
+                point1 = np.array((coordinate[0], coordinate[1]))
+                point2 = np.array((grid_x, grid_y))
                 dist = np.linalg.norm(point1 - point2)
-                if (dist >= maximum and (dist >= 1.5) and matrix[coordinate[1],coordinate[0]] != 0):
+                if (dist >= maximum and (dist >= 1.5) and matrix[coordinate[1], coordinate[0]] != 0):
                     maximum = dist
-                    target = [coordinate[0],coordinate[1]]
+                    target = [coordinate[0], coordinate[1]]
 
-        # print(target)                      
+        # self.get_logger().info(str(target))
 
+        # Library required definition of a grid (map)
+        # Which use the matrix defined previously
         grid = Grid(matrix=matrix)
-        # print("grid defined")
 
-        start = grid.node(grid_x,grid_y)
-        end = grid.node(target[0],target[1])
+        # The start and end point is of type node in the library
+        start = grid.node(grid_x, grid_y)
+        end = grid.node(target[0], target[1])
 
-        # print("Node defined")
-
+        # The function to generate list of coordinates
+        # given a grid map, start point and end point
         finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
         path, runs = finder.find_path(start, end, grid)
         del path[0:2]
-        plt.imshow(dilated, cmap='gray', origin='lower')
 
+        # Uncomment to see how a dilated map looks like
+        # plt.imshow(dilated, cmap='gray', origin='lower')
 
-        # print("path found")
+        # Uncomment below to see how the path to the target visualize
         # print('operations:', runs, 'path:', path)
         # print(grid.grid_str(path=path, start=start, end=end))
-        return [target,path]
-    
+        return [target, path]
+
     except Exception as e:
         print("Exception at", e)
+        # If there is no more target, it will return an error
+        # in which case the mapping should have finished
         self.get_logger().info("No path found! Map complete")
         return
 
@@ -123,8 +149,8 @@ class AutoNav(Node):
         self.roll_trans = 0
         self.pitch_trans = 0
         self.yaw_trans = 0
-        self.info = [0,0]
-        self.cur_position = [0,0]
+        self.info = [0, 0]
+        self.cur_position = [0, 0]
         self.trans = 0
         self.state = True
         self.cur_pos_x = 0
@@ -151,8 +177,13 @@ class AutoNav(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-    def position_callback(self,msg):
-        self.cur_position = [int(msg.data[0]),int(msg.data[1])]
+    def position_callback(self, msg):
+        """Callback to the position topic to get all information regarding location and orientation of the bot
+
+        Args:
+            msg (str): msg from the position topic
+        """
+        self.cur_position = [int(msg.data[0]), int(msg.data[1])]
         self.roll_trans, self.pitch_trans, self.yaw_trans = msg.data[2], msg.data[3], msg.data[4]
         self.roll, self.pitch, self.yaw = msg.data[9], msg.data[10], msg.data[11]
         self.cur_pos_x = msg.data[5]
@@ -195,7 +226,7 @@ class AutoNav(Node):
         odata = np.uint8(binnum.reshape(msg.info.height, msg.info.width))
         odata_pass = np.int8(binnum.reshape(msg.info.height, msg.info.width))
 
-        # set current robot location to 0
+        # set current robot location to 10
         odata[grid_y][grid_x] = 10
         # create image from 2D array using PIL
         img = Image.fromarray(odata)
@@ -238,21 +269,30 @@ class AutoNav(Node):
         rotated = img_transformed.rotate(np.degrees(
             self.yaw_trans)-90, expand=True, fillcolor=map_bg_color)
 
-        kernel = np.ones((4,4))
+        # Using Python CV library to dilate the wall/ object
+        kernel = np.ones((4, 4))
 
-        edges = np.where((odata == 3),1,0)
-        odata_occupied = grey_dilation(edges, footprint = iterate_structure(st,3), mode='nearest')
+        edges = np.where((odata == 3), 1, 0)
+        odata_occupied = grey_dilation(
+            edges, footprint=iterate_structure(st, 3), mode='nearest')
 
+        # Detect edge, the point at which unknown region meet known region
         test_img = cv2.Canny(odata, 1, 1)
-        odata_unmapped = np.where(test_img>0,1,0)
+        odata_unmapped = np.where(test_img > 0, 1, 0)
 
-        lines = np.where((odata_unmapped - odata_occupied != 1),0,1)
+        # Give back a grid map with only the line between the
+        # known and unknown region
+        lines = np.where((odata_unmapped - odata_occupied != 1), 0, 1)
 
+        # Take in a list of coordinates of the region between explored
+        # and unexplored
         unexplored = np.where(lines == 1)
-        explore_coordinate = list(zip(unexplored[1],unexplored[0]))
-        # print(explore_coordinate)
+        explore_coordinate = list(zip(unexplored[1], unexplored[0]))
+        # self.get_logger().info('Coordinate list:' + str(explore_coordinate))
 
-        # show the image using grayscale map
+        # Uncomment plt.imshow lines to see how the lines between regions
+        # looks like
+
         # plt.imshow(lines, cmap='gray', origin='lower')
         # plt.imshow(edges, cmap='gray', origin='lower')
         # plt.imshow(images, cmap='gray', origin='lower')
@@ -260,12 +300,14 @@ class AutoNav(Node):
         # pause to make sure the plot gets created
         plt.pause(0.00000000001)
 
-        # np.savetxt("map.txt", odata)
+        # Save to file call map.txt
+        np.savetxt("map.txt", odata)
 
         height = msg.info.height
         width = msg.info.width
 
-        self.info = path_find(self,odata_pass,grid_x,grid_y, height, width, explore_coordinate)
+        self.info = path_find(self, odata_pass, grid_x,
+                              grid_y, height, width, explore_coordinate)
 
     # function to rotate the TurtleBot
     def rotatebot(self, rot_angle):
@@ -300,14 +342,14 @@ class AutoNav(Node):
         # start rotation
         self.publisher_.publish(twist)
         # self.get_logger().info('Published twist')
-        
 
         # we will use the c_dir_diff variable to see if we can stop rotating
         c_dir_diff = c_change_dir
-        self.get_logger().info('c_change_dir: %f c_dir_diff: %f' % (c_change_dir, c_dir_diff))
+        self.get_logger().info('c_change_dir: %f c_dir_diff: %f' %
+                               (c_change_dir, c_dir_diff))
         # if the rotation direction was 1.0, then we will want to stop when the c_dir_diff
         # becomes -1.0, and vice versa
-        while(c_change_dir * c_dir_diff > 0):       
+        while(c_change_dir * c_dir_diff > 0):
             # allow the callback functions to run
             rclpy.spin_once(self)
             current_yaw = self.yaw_trans
@@ -327,6 +369,8 @@ class AutoNav(Node):
         self.publisher_.publish(twist)
 
     def forward(self):
+        """Function to drive the bot forward at the speed of speedchange
+        """
         twist = Twist()
         twist.linear.x = speedchange
         twist.angular.z = 0.0
@@ -341,43 +385,51 @@ class AutoNav(Node):
         twist.angular.z = 0.0
         # time.sleep(1)
         self.publisher_.publish(twist)
-    
-    def dist_check(self,path):
-        '''
-        if distance is larger than 1.5 return True else return False
-        '''
+
+    def dist_check(self, path):
+        """Check for distance from bot to the target
+
+        Args:
+            path (list): list of coordinates (path)
+
+        Returns:
+            boolean : True if distance > 2, else False
+        """
         if len(path) == 2:
             x = path[0]
             y = path[1]
             # x = 77
-            # y = 24    
+            # y = 24
             self.get_logger().info("Initializing")
             rclpy.spin_once(self)
-            start = np.array((self.cur_position[0],self.cur_position[1]))
-            end = np.array((x,y))        
+            start = np.array((self.cur_position[0], self.cur_position[1]))
+            end = np.array((x, y))
             dist = np.linalg.norm(start-end)
             self.get_logger().info("Calculate distance")
 
             if (dist > 2):
-                self.get_logger().info("Distance: "+ str(dist))      
+                self.get_logger().info("Distance: " + str(dist))
                 self.get_logger().info("Target at " + str(end))
                 self.get_logger().info("Input position: " + str(start))
-                self.get_logger().info('Rot-Yaw: R: %f D: %f' % (self.yaw_trans, np.degrees(self.yaw_trans)))
+                self.get_logger().info('Rot-Yaw: R: %f D: %f' %
+                                       (self.yaw_trans, np.degrees(self.yaw_trans)))
                 return True
             return False
         return False
-            # else:
-            #     self.get_logger().info("No path found! Map complete")
+        # else:
+        #     self.get_logger().info("No path found! Map complete")
 
     def test_move(self):
+        """Move the bot to the target (unfinished)
+        """
         if self.info[0] != 0 and len(self.info[1]) > 1:
             path = self.info[1].copy()
             self.get_logger().info("Adding path" + str(path))
-            while (len(path)>0):
+            while (len(path) > 0):
                 rclpy.spin_once(self)
                 point = path.pop(0)
                 self.get_logger().info("Target is at: " + str(point))
-                goal = Point ()
+                goal = Point()
                 goal.x = float(point[0])
                 goal.y = float(point[1])
 
@@ -387,14 +439,14 @@ class AutoNav(Node):
                 goal_angle = (math.atan2(inc_y, inc_x) - self.yaw)
 
                 self.rotatebot(goal_angle)
-                self.get_logger().info("Finish turning")  
+                self.get_logger().info("Finish turning")
                 time.sleep(1)
-                
+
                 while (self.dist_check(point)):
                     self.forward()
                     self.get_logger().info("Moving toward destination")
                     rclpy.spin_once(self)
-                
+
                 self.forward()
                 self.get_logger().info("Moving toward destination")
                 time.sleep(1)
@@ -416,7 +468,8 @@ class AutoNav(Node):
         finally:
             # stop moving
             self.stopbot()
-    
+
+
 def main(args=None):
     rclpy.init(args=args)
     auto_nav = AutoNav()
