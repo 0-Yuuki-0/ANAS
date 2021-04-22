@@ -46,7 +46,19 @@ If you decide to pick up this cool documentation language and want to help with 
 * Markdown preview
 * Mardown All in One
 
-## 3. Progress
+## 3. Libraries
+This project uses some libraries that may have or may have not been included within Python 3 or ROS 2 Python. Please ensure you have the following libraries:  
+
+1. numpy
+2. math
+3. cmath
+4. time
+5. matplotlib
+6. cv2 (Python OpenCV)
+7. scipy
+8. pathfinding
+
+## 4. Progress
 ### A.N.A.S  v1.0 (Wall Follower) (Deprecated)
 > This is legacy code which is not saved
 #### Logic
