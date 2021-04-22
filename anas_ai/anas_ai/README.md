@@ -13,8 +13,9 @@ This script is run on the Rpi of the bot to control the shooting mechanism using
 This script purpose is to help visualize what the bot see. Since we do not want the main code to be affected by extra calculation and task such as plotting and showing image which can potentially create lag in execution of crucial tasks like navigating. We use a script outside to do this.  
 This script is not much different from the stock script given in class. It was modified to visualize only the line where the unknown and known regions met. It does not send any information to any topic or interact in anyway with the main code.
 
-## anasai.py
-This is the main script to run A*Star algorithm. If position topic is not running, A*Star algorithm will run but do nothing.
+## anasai.py (unfinished)
+This is the main script to run A*Star algorithm. If position topic is not running, A*Star algorithm will run but do nothing.  
+(Still in development, works occasionally)
 
 ## state.py
 Same usage as `position.py` however this is based on automaticaddison logic, so the code was port over to be able to run the wall follower logic.

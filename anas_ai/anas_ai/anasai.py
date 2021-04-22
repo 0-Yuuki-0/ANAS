@@ -425,8 +425,11 @@ class AutoNav(Node):
         if self.info[0] != 0 and len(self.info[1]) > 1:
             path = self.info[1].copy()
             self.get_logger().info("Adding path" + str(path))
+            # While the path is not empty meaning the bot has not reached the target yet
+            # this loops will still run
             while (len(path) > 0):
                 rclpy.spin_once(self)
+                # pop a coordinate from the path
                 point = path.pop(0)
                 self.get_logger().info("Target is at: " + str(point))
                 goal = Point()

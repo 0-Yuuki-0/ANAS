@@ -16,7 +16,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import OccupancyGrid
- 
+
 import tf2_ros
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 import numpy as np
@@ -39,7 +39,7 @@ from pathfinding.finder.msp import MinimumSpanningTree
 # constants
 occ_bins = [-1, 0, 51, 101]
 map_bg_color = 1
-st = generate_binary_structure(2,1)
+st = generate_binary_structure(2, 1)
 dilate = 2
 
 # code from https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
@@ -67,45 +67,47 @@ def euler_from_quaternion(x, y, z, w):
 
     return roll_x, pitch_y, yaw_z  # in radians
 
-def path_find(self,odata,grid_x,grid_y, height, width, explore_coordinate):
-        
-        try:
-            
-            mod_odata = np.where(np.copy(odata)-2 == 8, 0, np.copy(odata)-2)
-            
-            dilated = grey_dilation(mod_odata, footprint = iterate_structure(st,dilate), mode='nearest')
 
-            matrix = np.where((dilated > 0),0,1)                
+def path_find(self, odata, grid_x, grid_y, height, width, explore_coordinate):
 
-            maximum = 0
+    try:
 
-            for coordinate in explore_coordinate:
-                if (coordinate[0] < width and coordinate[1] <height):
-                    point1 = np.array((coordinate[0],coordinate[1]))
-                    point2 = np.array((grid_x,grid_y))
-                    dist = np.linalg.norm(point1 - point2)
-                    if (dist >= maximum and (dist >= 1.5) and matrix[coordinate[1],coordinate[0]] != 0):
-                        maximum = dist
-                        target = [coordinate[0],coordinate[1]]
+        mod_odata = np.where(np.copy(odata)-2 == 8, 0, np.copy(odata)-2)
 
-            grid = Grid(matrix=matrix)
-            # print("grid defined")
+        dilated = grey_dilation(
+            mod_odata, footprint=iterate_structure(st, dilate), mode='nearest')
 
-            start = grid.node(grid_x,grid_y)
-            end = grid.node(target[0],target[1])
+        matrix = np.where((dilated > 0), 0, 1)
 
-            # print("Node defined")
+        maximum = 0
 
-            finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-            path, runs = finder.find_path(start, end, grid)
+        for coordinate in explore_coordinate:
+            if (coordinate[0] < width and coordinate[1] < height):
+                point1 = np.array((coordinate[0], coordinate[1]))
+                point2 = np.array((grid_x, grid_y))
+                dist = np.linalg.norm(point1 - point2)
+                if (dist >= maximum and (dist >= 1.5) and matrix[coordinate[1], coordinate[0]] != 0):
+                    maximum = dist
+                    target = [coordinate[0], coordinate[1]]
 
-            print(grid.grid_str(path=path, start=start, end=end))
-            print(target)            
-        
-        except Exception as e:
-            print("Exception at", e)
-            self.get_logger().info("Target detection error")
-            return
+        grid = Grid(matrix=matrix)
+        # print("grid defined")
+
+        start = grid.node(grid_x, grid_y)
+        end = grid.node(target[0], target[1])
+
+        # print("Node defined")
+
+        finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+        path, runs = finder.find_path(start, end, grid)
+
+        print(grid.grid_str(path=path, start=start, end=end))
+        print(target)
+
+    except Exception as e:
+        print("Exception at", e)
+        self.get_logger().info("Target detection error")
+        return
 
 
 class Occupy(Node):
@@ -122,7 +124,6 @@ class Occupy(Node):
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
 
         # self.publisher_ = self.create_publisher(UInt64MultiArray, 'move_path', 10)
-
 
     def listener_callback(self, msg):
         # create numpy array
@@ -214,18 +215,19 @@ class Occupy(Node):
         rotated = img_transformed.rotate(np.degrees(
             yaw)-90, expand=True, fillcolor=map_bg_color)
 
-        kernel = np.ones((4,4))
+        kernel = np.ones((4, 4))
 
-        edges = np.where((odata == 3),1,0)
-        odata_occupied = grey_dilation(edges, footprint = iterate_structure(st,3), mode='nearest')
+        edges = np.where((odata == 3), 1, 0)
+        odata_occupied = grey_dilation(
+            edges, footprint=iterate_structure(st, 3), mode='nearest')
 
         test_img = cv2.Canny(odata, 1, 1)
-        odata_unmapped = np.where(test_img>0,1,0)
+        odata_unmapped = np.where(test_img > 0, 1, 0)
 
-        lines = np.where((odata_unmapped - odata_occupied != 1),0,1)
+        lines = np.where((odata_unmapped - odata_occupied != 1), 0, 1)
 
         unexplored = np.where(lines == 1)
-        explore_coordinate = list(zip(unexplored[1],unexplored[0]))
+        explore_coordinate = list(zip(unexplored[1], unexplored[0]))
         # print(explore_coordinate)
 
         # lines = cv2.Canny(lines,1,1)
@@ -243,7 +245,9 @@ class Occupy(Node):
         height = msg.info.height
         width = msg.info.width
 
-        path_find(self,odata_pass,grid_x,grid_y, height, width, explore_coordinate)
+        path_find(self, odata_pass, grid_x, grid_y,
+                  height, width, explore_coordinate)
+
 
 def main(args=None):
     rclpy.init(args=args)

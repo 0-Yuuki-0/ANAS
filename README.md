@@ -47,7 +47,7 @@ If you decide to pick up this cool documentation language and want to help with 
 * Mardown All in One
 
 ## 3. Progress
-### A.N.A.S  v1.0 (Wall Follower)
+### A.N.A.S  v1.0 (Wall Follower) (Deprecated)
 > This is legacy code which is not saved
 #### Logic
 * Hugs right 
@@ -61,7 +61,7 @@ If you decide to pick up this cool documentation language and want to help with 
 * Movement speed and turning is prety slow and inaccurate
 * The forward movment is hardcode and not adaptive
 * Cannot turn corner well and
-### A.N.A.S  v2.0 (A*STAR Path Finding)
+### A.N.A.S  v2.0 (A*STAR Path Finding) (Unstable)
 > To run this logic   
 > `ros2 run anas_ai pos`  
 > `ros2 run anas_ai nav`
@@ -75,7 +75,7 @@ If you decide to pick up this cool documentation language and want to help with 
 * To complete one set of path takes more than 2 mintues
 * The orientation of the map generated and the map is in wrong orientation regularly, making the rotatebot code very confusing for the bot, because it doesnt know where to go.
 
-### A.N.A.S  v3.0 (Wall Follower v2)
+### A.N.A.S  v3.0 (Wall Follower v2) (Stable)
 > To run this logic   
 > `ros2 run anas_ai state`  
 > `ros2 run anas_ai follow`
