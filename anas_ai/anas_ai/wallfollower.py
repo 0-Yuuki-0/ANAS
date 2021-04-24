@@ -249,7 +249,7 @@ def main(args=None):
     
     # Create the node
     controller = PlaceholderController()
-    rclpy.follow_wall()
+    controller.follow_wall()
     
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
